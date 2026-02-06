@@ -1,0 +1,196 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.110.0)'
+        required: true
+        type: string
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-14-xlarge
+    env:
+      VSCODE_ARCH: arm64
+      NPM_ARCH: arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Python setuptools
+        run: python3 -m pip install --break-system-packages setuptools
+
+      - name: Install dependencies
+        run: |
+          set -e
+          for i in {1..5}; do
+            npm ci && break
+            if [ $i -eq 5 ]; then
+              echo "npm install failed too many times" >&2
+              exit 1
+            fi
+            echo "npm install failed $i, trying again..."
+          done
+        env:
+          npm_config_arch: ${{ env.NPM_ARCH }}
+          VSCODE_ARCH: ${{ env.VSCODE_ARCH }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GYP_DEFINES: "kerberos_use_rtld=false"
+
+      - name: Download built-in extensions
+        run: node build/lib/builtInExtensions.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile and package
+        run: |
+          npm run gulp vscode-darwin-arm64-min
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create DMG
+        run: |
+          npm run gulp vscode-darwin-arm64-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reasonance-macos-arm64
+          path: .build/darwin/archive/*.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-2022
+    env:
+      VSCODE_ARCH: x64
+      NPM_ARCH: x64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          npm_config_arch: ${{ env.NPM_ARCH }}
+          VSCODE_ARCH: ${{ env.VSCODE_ARCH }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download built-in extensions
+        run: node build/lib/builtInExtensions.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile and package
+        run: npm run gulp vscode-win32-x64-min
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create installer
+        run: npm run gulp vscode-win32-x64-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reasonance-windows-x64
+          path: .build/win32-x64/archive/*.zip
+          if-no-files-found: error
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: reasonance-macos-arm64
+          path: ./artifacts/macos
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: reasonance-windows-x64
+          path: ./artifacts/windows
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+            echo "tag=v${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Reasonance ${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            # Reasonance ${{ steps.version.outputs.tag }}
+
+            ## 🎉 Release
+
+            Reasonance is a modern AI-powered code editor based on VS Code with enhanced features.
+
+            ### ✨ Features in this Release
+
+            - **iFlow AI Integration**: Powerful AI assistant with streaming responses
+            - **Enhanced Chat Interface**: Real-time elapsed time, copy button, glowing animated border
+            - **Custom Branding**: Reasonance logo and theming
+            - **Auto-Update System**: Automatic update checks via GitHub releases
+
+            ### 📦 Installation
+
+            **macOS (Apple Silicon):**
+            1. Download `Reasonance-darwin-arm64.zip`
+            2. Extract and move to Applications folder
+            3. Right-click and select "Open" on first launch
+
+            **Windows (x64):**
+            1. Download `Reasonance-win32-x64.zip`
+            2. Extract to desired location
+            3. Run `Reasonance.exe`
+
+            ### 🔄 Auto-Updates
+
+            Reasonance will automatically check for updates and notify you when new versions are available.
+
+            ### 🙏 Credits
+
+            Built on top of [Visual Studio Code](https://github.com/microsoft/vscode) by Microsoft.
+          files: |
+            ./artifacts/macos/*.zip
+            ./artifacts/windows/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
