@@ -10,7 +10,6 @@ import { IRequestService, asJson } from '../../../../platform/request/common/req
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { ISecretStorageService } from '../../../../platform/secrets/common/secrets.js';
 import { ExtensionIdentifier } from '../../../../platform/extensions/common/extensions.js';
-import { VSBuffer } from '../../../../base/common/buffer.js';
 import {
 	IChatMessage,
 	IChatResponsePart,
