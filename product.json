@@ -6,6 +6,8 @@
 	"win32MutexName": "reasonance",
 	"licenseName": "MIT",
 	"licenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
+	"updateUrl": "https://api.github.com/repos/dhhd67807-lgtm/reasonance-ide/releases/latest",
+	"downloadUrl": "https://github.com/dhhd67807-lgtm/reasonance-ide/releases",
 	"serverLicenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
 	"serverGreeting": [],
 	"serverLicense": [],
