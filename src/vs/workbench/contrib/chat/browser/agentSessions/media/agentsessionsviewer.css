@@ -9,6 +9,59 @@
 	height: 100%;
 	min-height: 0;
 
+	/* Make sessions display horizontally like Chrome tabs */
+	& > .monaco-list {
+		display: flex !important;
+		flex-direction: row !important;
+		flex-wrap: nowrap !important;
+		overflow-x: auto !important;
+		overflow-y: hidden !important;
+		height: 48px !important;
+		min-height: 48px !important;
+		max-height: 48px !important;
+		padding: 4px 8px !important;
+	}
+
+	& > .monaco-list > .monaco-scrollable-element {
+		display: flex !important;
+		flex-direction: row !important;
+		height: 100% !important;
+	}
+
+	& > .monaco-list > .monaco-scrollable-element > .monaco-list-rows {
+		display: flex !important;
+		flex-direction: row !important;
+		gap: 4px !important;
+		height: 100% !important;
+		width: auto !important;
+	}
+
+	.monaco-list-row {
+		display: inline-flex !important;
+		flex-direction: row !important;
+		width: auto !important;
+		min-width: 150px !important;
+		max-width: 250px !important;
+		height: 40px !important;
+		border-radius: 8px 8px 0 0 !important;
+		background-color: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+		border-bottom: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		flex-shrink: 0 !important;
+	}
+
+	.monaco-list-row:hover {
+		background-color: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.monaco-list-row.selected,
+	.monaco-list-row.focused {
+		background-color: rgba(217, 70, 239, 0.2) !important;
+		border-color: #D946EF !important;
+	}
+
 	.monaco-list-row .force-no-twistie {
 		display: none !important;
 	}
@@ -68,8 +121,10 @@
 	.agent-session-item {
 		display: flex;
 		flex-direction: row;
-		/* to offset from possible scrollbar */
-		padding: 8px 12px 8px 8px;
+		/* Adjust padding for horizontal tabs */
+		padding: 4px 12px !important;
+		height: 100% !important;
+		align-items: center !important;
 
 		&.archived {
 			color: var(--vscode-descriptionForeground);
@@ -84,11 +139,11 @@
 
 		.agent-session-icon-col {
 			display: flex;
-			align-items: flex-start;
+			align-items: center !important;
 
 			.agent-session-icon {
 				flex-shrink: 0;
-				font-size: 16px;
+				font-size: 14px !important;
 
 				&.codicon.codicon-session-in-progress {
 					color: var(--vscode-textLink-foreground);
@@ -113,24 +168,29 @@
 		}
 
 		.agent-session-main-col {
-			padding-left: 8px;
+			padding-left: 6px !important;
+			display: flex !important;
+			flex-direction: column !important;
+			justify-content: center !important;
 		}
 
 		.agent-session-title-row,
 		.agent-session-details-row {
 			display: flex;
 			align-items: center;
-			line-height: 16px;
+			line-height: 14px !important;
 		}
 
 		.agent-session-title-row {
-			padding-bottom: 4px;
+			padding-bottom: 2px !important;
+			font-size: 12px !important;
 		}
 
 		.agent-session-details-row {
 			gap: 4px;
-			font-size: 12px;
+			font-size: 10px !important;
 			color: var(--vscode-descriptionForeground);
+			display: none !important; /* Hide details in horizontal tabs to save space */
 
 			.rendered-markdown {
 				p {
@@ -216,7 +276,7 @@
 	}
 
 	.agent-session-section {
-		display: flex;
+		display: none !important; /* Hide section headers in horizontal tab layout */
 		align-items: center;
 		font-size: 11px;
 		color: var(--vscode-descriptionForeground);

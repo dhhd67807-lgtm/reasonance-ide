@@ -46,6 +46,7 @@ import { ILogService } from '../../../../../platform/log/common/log.js';
 import { IMarkdownRenderer } from '../../../../../platform/markdown/browser/markdownRenderer.js';
 import { isDark } from '../../../../../platform/theme/common/theme.js';
 import { IThemeService } from '../../../../../platform/theme/common/themeService.js';
+import { IClipboardService } from '../../../../../platform/clipboard/common/clipboardService.js';
 import { AccessibilitySignal, IAccessibilitySignalService } from '../../../../../platform/accessibilitySignal/browser/accessibilitySignalService.js';
 import { FocusMode } from '../../../../../platform/native/common/native.js';
 import { IHostService } from '../../../../services/host/browser/host.js';
@@ -129,6 +130,8 @@ export interface IChatListItemTemplate {
 	readonly header?: HTMLElement;
 	readonly footerToolbar: MenuWorkbenchToolBar;
 	readonly footerDetailsContainer: HTMLElement;
+	readonly elapsedTimeElement: HTMLElement;
+	readonly copyElement: HTMLElement;
 	readonly avatarContainer: HTMLElement;
 	readonly username: HTMLElement;
 	readonly detail: HTMLElement;
@@ -252,6 +255,7 @@ export class ChatListItemRenderer extends Disposable implements ITreeRenderer<Ch
 		@IHostService private readonly hostService: IHostService,
 		@IAccessibilitySignalService private readonly accessibilitySignalService: IAccessibilitySignalService,
 		@IAccessibilityService private readonly accessibilityService: IAccessibilityService,
+		@IClipboardService private readonly clipboardService: IClipboardService,
 	) {
 		super();
 
@@ -483,6 +487,12 @@ export class ChatListItemRenderer extends Disposable implements ITreeRenderer<Ch
 			footerToolbarContainer.classList.add('hidden');
 		}
 
+		// Add elapsed time and copy elements
+		const elapsedTimeElement = dom.append(footerToolbarContainer, $('span.elapsed-time'));
+		const copyElement = dom.append(footerToolbarContainer, $('span.copy-button'));
+		copyElement.textContent = 'Copy';
+		copyElement.style.cursor = 'pointer';
+
 		const footerToolbar = templateDisposables.add(scopedInstantiationService.createInstance(MenuWorkbenchToolBar, footerToolbarContainer, MenuId.ChatMessageFooter, {
 			eventDebounceDelay: 0,
 			menuOptions: { shouldForwardArgs: true, renderShortTitle: true },
@@ -547,7 +557,7 @@ export class ChatListItemRenderer extends Disposable implements ITreeRenderer<Ch
 		}));
 		const connectionObserver = document.createElement('connection-observer') as dom.ConnectionObserverElement;
 		dom.append(container, connectionObserver);
-		const template: IChatListItemTemplate = { header, avatarContainer, requestHover, username, detail, value, rowContainer, elementDisposables, templateDisposables, contextKeyService, instantiationService: scopedInstantiationService, agentHover, titleToolbar, footerToolbar, footerDetailsContainer, disabledOverlay, checkpointToolbar, checkpointRestoreToolbar, checkpointContainer, checkpointRestoreContainer };
+		const template: IChatListItemTemplate = { header, avatarContainer, requestHover, username, detail, value, rowContainer, elementDisposables, templateDisposables, contextKeyService, instantiationService: scopedInstantiationService, agentHover, titleToolbar, footerToolbar, footerDetailsContainer, elapsedTimeElement, copyElement, disabledOverlay, checkpointToolbar, checkpointRestoreToolbar, checkpointContainer, checkpointRestoreContainer };
 
 		connectionObserver.onDidDisconnect = () => {
 			template.renderedPartsMounted = false;
@@ -672,6 +682,39 @@ export class ChatListItemRenderer extends Disposable implements ITreeRenderer<Ch
 			templateData.titleToolbar.context = element;
 		}
 		templateData.footerToolbar.context = element;
+
+		// Update elapsed time and copy button for responses
+		if (isResponseVM(element)) {
+			const completedAt = element.model.completedAt;
+			const timestamp = element.model.timestamp;
+
+			console.log('Response element:', element.id, 'completedAt:', completedAt, 'timestamp:', timestamp, 'isComplete:', element.isComplete);
+
+			if (element.isComplete && timestamp) {
+				const now = Date.now();
+				const elapsedMs = (completedAt || now) - timestamp;
+				const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
+				templateData.elapsedTimeElement.textContent = `Elapsed time: ${elapsedSeconds}s`;
+				templateData.elapsedTimeElement.classList.remove('hidden');
+				templateData.copyElement.classList.remove('hidden');
+
+				// Add copy click handler
+				templateData.elementDisposables.add(dom.addDisposableListener(templateData.copyElement, dom.EventType.CLICK, async () => {
+					console.log('Copy button clicked!');
+					// Use the getMarkdown method to get the text content
+					const text = element.response.getMarkdown();
+					console.log('Copying text:', text.substring(0, 100));
+					await this.clipboardService.writeText(text);
+					console.log('Text copied to clipboard');
+				}));
+			} else {
+				templateData.elapsedTimeElement.classList.add('hidden');
+				templateData.copyElement.classList.add('hidden');
+			}
+		} else {
+			templateData.elapsedTimeElement.classList.add('hidden');
+			templateData.copyElement.classList.add('hidden');
+		}
 
 		// Render result details in footer if available
 		if (isResponseVM(element) && element.result?.details) {

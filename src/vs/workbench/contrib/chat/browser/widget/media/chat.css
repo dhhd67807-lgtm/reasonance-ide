@@ -2885,3 +2885,140 @@ have to be updated for changes to the rules above, or to support more deeply nes
 	letter-spacing: 0.5px;
 	color: var(--vscode-descriptionForeground);
 }
+
+
+
+/* Hide avatar/logo for Reasonance AI responses */
+.interactive-item-container.interactive-response .header .avatar-container {
+	display: none !important;
+}
+
+/* Remove extra spacing from username when no avatar */
+.interactive-item-container.interactive-response .header .user {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.interactive-item-container.interactive-response .header .username {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Hide Add Context button and attachments */
+.chat-attachments-container {
+	display: none !important;
+}
+
+/* Hide Configure Tools button */
+.chat-input-toolbar .action-item[data-command="workbench.action.chat.configureTools"],
+.chat-execute-toolbar .action-item[data-command="workbench.action.chat.configureTools"],
+.action-item .codicon-tools {
+	display: none !important;
+}
+
+/* Make prompt box taller */
+.interactive-session .chat-input-container {
+	min-height: 100px !important;
+}
+
+.interactive-session .chat-editor-container {
+	min-height: 65px !important;
+}
+
+/* Always show feedback buttons (like/dislike) */
+.interactive-item-container.interactive-response .chat-footer-toolbar {
+	display: inline-flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	flex-direction: row !important;
+	align-items: center !important;
+}
+
+.interactive-item-container.interactive-response:not(.chat-response-loading) .chat-footer-toolbar {
+	display: inline-flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+}
+
+/* Remove pink border from chat responses */
+.interactive-item-container.interactive-response {
+	border: none !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.interactive-item-container {
+	border: none !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.interactive-list .monaco-list-row {
+	border: none !important;
+	outline: none !important;
+}
+
+/* Hide ALL buttons in header - regenerate/undo/play buttons */
+.interactive-item-container .header,
+.interactive-item-container .header *,
+.interactive-response .header .monaco-toolbar,
+.interactive-response .header .actions-container,
+.interactive-response .header .action-item {
+	display: none !important;
+	visibility: hidden !important;
+	height: 0 !important;
+	overflow: hidden !important;
+}
+
+/* Make footer toolbar horizontal */
+.interactive-item-container .chat-footer-toolbar {
+	display: inline-flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	gap: 0 !important;
+}
+
+/* Style elapsed time element */
+.interactive-item-container .chat-footer-toolbar .elapsed-time {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.6);
+	display: inline-block;
+	line-height: 24px;
+	margin-right: 12px;
+	white-space: nowrap;
+}
+
+.interactive-item-container .chat-footer-toolbar .elapsed-time.hidden {
+	display: none;
+}
+
+/* Style copy button element */
+.interactive-item-container .chat-footer-toolbar .copy-button {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.6);
+	display: inline-block;
+	line-height: 24px;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.interactive-item-container .chat-footer-toolbar .copy-button.hidden {
+	display: none;
+}
+
+.interactive-item-container .chat-footer-toolbar .copy-button:hover {
+	color: rgba(255, 255, 255, 0.9);
+	text-decoration: underline;
+}
+
+/* Remove the old pseudo-element styles */
+.interactive-item-container.interactive-response:not(.chat-response-loading) .chat-footer-toolbar::before,
+.interactive-item-container.interactive-response:not(.chat-response-loading) .chat-footer-toolbar::after {
+	display: none !important;
+}
+
+/* Hide ALL existing action items in footer to avoid duplicates */
+.interactive-item-container .chat-footer-toolbar .action-item {
+	display: none !important;
+}

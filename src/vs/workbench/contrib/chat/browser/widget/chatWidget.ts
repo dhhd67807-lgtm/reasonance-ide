@@ -15,7 +15,7 @@ import { toErrorMessage } from '../../../../../base/common/errorMessage.js';
 import { Emitter, Event } from '../../../../../base/common/event.js';
 import { IMarkdownString, MarkdownString } from '../../../../../base/common/htmlContent.js';
 import { Iterable } from '../../../../../base/common/iterator.js';
-import { Disposable, DisposableStore, IDisposable, MutableDisposable, thenIfNotDisposed } from '../../../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore, IDisposable, MutableDisposable } from '../../../../../base/common/lifecycle.js';
 import { ResourceSet } from '../../../../../base/common/map.js';
 import { Schemas } from '../../../../../base/common/network.js';
 import { filter } from '../../../../../base/common/objects.js';
@@ -162,7 +162,7 @@ const supportsAllAttachments: Required<IChatAgentAttachmentCapabilities> = {
 	supportsTerminalAttachments: true,
 };
 
-const DISCLAIMER = localize('chatDisclaimer', "AI responses may be inaccurate.");
+const DISCLAIMER = '';
 
 export class ChatWidget extends Disposable implements IChatWidget {
 
@@ -241,9 +241,6 @@ export class ChatWidget extends Disposable implements IChatWidget {
 
 	private _visible = false;
 	get visible() { return this._visible; }
-
-	private _instructionFilesCheckPromise: Promise<boolean> | undefined;
-	private _instructionFilesExist: boolean | undefined;
 
 	private _isRenderingWelcome = false;
 
@@ -873,52 +870,8 @@ export class ChatWidget extends Disposable implements IChatWidget {
 	}
 
 	private _getGenerateInstructionsMessage(): IMarkdownString {
-		// Start checking for instruction files immediately if not already done
-		if (!this._instructionFilesCheckPromise) {
-			this._instructionFilesCheckPromise = this._checkForAgentInstructionFiles();
-			// Use VS Code's idiomatic pattern for disposal-safe promise callbacks
-			this._register(thenIfNotDisposed(this._instructionFilesCheckPromise, hasFiles => {
-				this._instructionFilesExist = hasFiles;
-				// Only re-render if the current view still doesn't have items and we're showing the welcome message
-				const hasViewModelItems = this.viewModel?.getItems().length ?? 0;
-				if (hasViewModelItems === 0) {
-					this.renderWelcomeViewContentIfNeeded();
-				}
-			}));
-		}
-
-		// If we already know the result, use it
-		if (this._instructionFilesExist === true) {
-			// Don't show generate instructions message if files exist
-			return new MarkdownString('');
-		} else if (this._instructionFilesExist === false) {
-			// Show generate instructions message if no files exist
-			const generateInstructionsCommand = 'workbench.action.chat.generateInstructions';
-			return new MarkdownString(localize(
-				'chatWidget.instructions',
-				"[Generate Agent Instructions]({0}) to onboard AI onto your codebase.",
-				`command:${generateInstructionsCommand}`
-			), { isTrusted: { enabledCommands: [generateInstructionsCommand] } });
-		}
-
-		// While checking, don't show the generate instructions message
+		// Don't show generate instructions message
 		return new MarkdownString('');
-	}
-
-	/**
-	 * Checks if any agent instruction files (.github/copilot-instructions.md or AGENTS.md) exist in the workspace.
-	 * Used to determine whether to show the "Generate Agent Instructions" hint.
-	 *
-	 * @returns true if instruction files exist OR if instruction features are disabled (to hide the hint)
-	 */
-	private async _checkForAgentInstructionFiles(): Promise<boolean> {
-		try {
-			return (await this.promptsService.listAgentInstructions(CancellationToken.None)).length > 0;
-		} catch (error) {
-			// On error, assume no instruction files exist to be safe
-			this.logService.warn('[ChatWidget] Error checking for instruction files:', error);
-			return false;
-		}
 	}
 
 	private getWelcomeViewContent(additionalMessage: string | IMarkdownString | undefined): IChatViewWelcomeContent {
@@ -950,13 +903,13 @@ export class ChatWidget extends Disposable implements IChatWidget {
 		} else if (this.input.currentModeKind === ChatModeKind.Edit) {
 			title = localize('editsTitle', "Edit in context");
 		} else {
-			title = localize('agentTitle', "Build with Agent");
+			title = localize('agentGreeting', "Hi How are you");
 		}
 
 		return {
 			title,
-			message: new MarkdownString(DISCLAIMER),
-			icon: Codicon.chatSparkle,
+			message: new MarkdownString(localize('agentSubtitle', "Code Freely")),
+			icon: undefined,
 			additionalMessage,
 			suggestedPrompts: this.getPromptFileSuggestions()
 		};

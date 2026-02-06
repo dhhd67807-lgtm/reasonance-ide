@@ -41,15 +41,27 @@
 .pane-body > .chat-view-welcome {
 	flex-direction: column;
 	justify-content: center;
+	align-items: center;
 	overflow: hidden;
 	height: 100%;
 	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 100px; /* Leave space for prompt box */
+	pointer-events: none;
+}
+
+.pane-body.chat-view-welcome-visible > .chat-view-welcome {
+	display: flex !important;
 }
 
 div.chat-welcome-view {
-	display: flex;
+	display: flex !important;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	padding: 12px;
 
 	& > .chat-welcome-view-icon {
@@ -233,4 +245,153 @@ div.chat-welcome-view {
 	> .chat-welcome-view-suggested-prompt:hover {
 		background-color: var(--vscode-list-hoverBackground);
 	}
+}
+
+/* Animated gradient background ONLY for welcome view - not when chat has messages */
+.pane-body.chat-view-welcome-visible > .chat-view-welcome,
+.pane-body.chat-view-welcome-visible .interactive-session .chat-welcome-view-container,
+.pane-body.chat-view-welcome-visible .interactive-session {
+	background: linear-gradient(
+		135deg,
+		#000000 0%,
+		#0a0510 10%,
+		#1a0a1f 20%,
+		#2a1530 30%,
+		#2d1b3d 35%,
+		#8b7a9e 45%,
+		#ffffff 50%,
+		#8b7a9e 55%,
+		#2d1b3d 65%,
+		#2a1530 70%,
+		#1a0a1f 80%,
+		#0a0510 90%,
+		#000000 100%
+	) !important;
+	background-size: 400% 400% !important;
+	animation: gradientShift 15s ease-in-out infinite !important;
+}
+
+/* Solid black background for chat when messages are present */
+.pane-body:not(.chat-view-welcome-visible) .interactive-session,
+.pane-body:not(.chat-view-welcome-visible) .interactive-session .chat-list-container,
+.pane-body:not(.chat-view-welcome-visible) .interactive-session .chat-list,
+.interactive-session .chat-list-container,
+.interactive-session .chat-list,
+.pane-body.integrated-chatview,
+.chat-viewpane .chat-controls-container,
+.pane-body {
+	background: #000000 !important;
+}
+
+/* Chat input container - subtle styling with inset shadow, no gradients */
+.interactive-session .chat-input-container {
+	background-color: rgba(0, 0, 0, 0.4) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 8px !important;
+	position: relative !important;
+	box-shadow:
+		inset 0 1px 3px rgba(0, 0, 0, 0.4),
+		inset 0 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+
+.interactive-session .chat-input-container:focus-within {
+	border-color: rgba(255, 255, 255, 0.2) !important;
+	box-shadow:
+		inset 0 1px 3px rgba(0, 0, 0, 0.4),
+		inset 0 0 0 1px rgba(0, 0, 0, 0.2) !important;
+	outline: none !important;
+}
+
+/* Remove focus outline from chat container */
+.interactive-session:focus,
+.interactive-session:focus-within {
+	outline: none !important;
+	border: none !important;
+}
+
+/* Remove gradient effects - no ::before and ::after pseudo-elements */
+
+/* Input editor background */
+.interactive-session .chat-editor-container .interactive-input-editor .monaco-editor,
+.interactive-session .chat-editor-container .interactive-input-editor .monaco-editor-background {
+	background-color: transparent !important;
+}
+
+/* Hide the placeholder text in chat input */
+.interactive-session .chat-editor-container .interactive-input-editor .monaco-editor .editor-placeholder {
+	display: none !important;
+}
+
+/* Reasonance logo for chat welcome view - centered, no text */
+.chat-welcome-view .chat-welcome-view-icon {
+	display: flex !important;
+	visibility: visible !important;
+	height: 120px !important;
+	min-height: 120px !important;
+	width: 120px !important;
+	margin: 20px auto !important;
+	background-image: url('../../../editor/media/letterpress-dark.svg') !important;
+	background-size: contain !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	filter: brightness(0) invert(1) !important; /* Make it white */
+}
+
+/* Also apply to the container */
+.chat-view-welcome .chat-welcome-view .chat-welcome-view-icon,
+.pane-body > .chat-view-welcome .chat-welcome-view-icon {
+	display: flex !important;
+	visibility: visible !important;
+	height: 120px !important;
+	min-height: 120px !important;
+	width: 120px !important;
+	margin: 20px auto !important;
+	background-image: url('../../../editor/media/letterpress-dark.svg') !important;
+	background-size: contain !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	filter: brightness(0) invert(1) !important;
+}
+
+.chat-welcome-view .chat-welcome-view-icon .codicon {
+	display: none !important;
+}
+
+/* Hide title text completely */
+.chat-welcome-view .chat-welcome-view-title {
+	display: none !important;
+}
+
+/* Hide all extra content */
+.chat-welcome-view .chat-welcome-view-message,
+.chat-welcome-view .chat-welcome-view-disclaimer,
+.chat-welcome-view .chat-welcome-view-tips,
+.chat-welcome-view .rendered-markdown,
+.chat-welcome-view a,
+.chat-welcome-view button {
+	display: none !important;
+}
+
+/* Hide suggested prompts section */
+.chat-welcome-view-suggested-prompts {
+	display: none !important;
+}
+
+@keyframes gradientShift {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+/* Make chat items transparent to show gradient */
+.interactive-session .chat-list .monaco-list-row,
+.interactive-session .chat-list .chat-request,
+.interactive-session .chat-list .chat-response {
+	background-color: transparent !important;
 }

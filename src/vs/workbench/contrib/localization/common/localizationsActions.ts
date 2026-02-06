@@ -22,8 +22,8 @@ export class ConfigureDisplayLanguageAction extends Action2 {
 			menu: {
 				id: MenuId.CommandPalette
 			},
-			metadata: {
-				description: localize2('configureLocaleDescription', "Changes the locale of VS Code based on installed language packs. Common languages include French, Chinese, Spanish, Japanese, German, Korean, and more.")
+				metadata: {
+				description: localize2('configureLocaleDescription', "Changes the locale of Reasonance based on installed language packs. Common languages include French, Chinese, Spanish, Japanese, German, Korean, and more.")
 			}
 		});
 	}

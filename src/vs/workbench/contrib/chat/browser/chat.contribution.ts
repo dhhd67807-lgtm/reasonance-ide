@@ -1451,6 +1451,10 @@ registerWorkbenchContribution2(PromptLanguageFeaturesProvider.ID, PromptLanguage
 registerWorkbenchContribution2(ChatWindowNotifier.ID, ChatWindowNotifier, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(ChatRepoInfoContribution.ID, ChatRepoInfoContribution, WorkbenchPhase.Eventually);
 
+// Register default chat agent for iFlow
+import { DefaultChatAgent } from './defaultChatAgent.js';
+registerWorkbenchContribution2('workbench.contrib.defaultChatAgent', DefaultChatAgent, WorkbenchPhase.BlockRestore);
+
 registerChatActions();
 registerChatAccessibilityActions();
 registerChatCopyActions();

@@ -921,7 +921,10 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 
 			// Sync input text
 			if (this._inputEditor) {
-				this._inputEditor.setValue(state?.inputText || '');
+				let inputText = state?.inputText || '';
+				// Remove @ mentions from the beginning of the input text
+				inputText = inputText.replace(/^@\S+\s*/, '');
+				this._inputEditor.setValue(inputText);
 				if (state?.selections.length) {
 					this._inputEditor.setSelections(state.selections);
 				}
@@ -1046,8 +1049,12 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 	 */
 	public getCurrentInputState(): IChatModelInputState {
 		const mode = this._currentModeObservable.get();
+		let inputText = this._inputEditor?.getValue() ?? '';
+		// Remove @ mentions from the beginning when saving state
+		inputText = inputText.replace(/^@\S+\s*/, '');
+
 		const state: IChatModelInputState = {
-			inputText: this._inputEditor?.getValue() ?? '',
+			inputText: inputText,
 			attachments: this._attachmentModel.attachments,
 			mode: {
 				id: mode.id,
@@ -1237,6 +1244,8 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 	}
 
 	setValue(value: string, transient: boolean): void {
+		// Remove @ mentions from the beginning
+		value = value.replace(/^@\S+\s*/, '');
 		this.inputEditor.setValue(value);
 		// always leave cursor at the end
 		const model = this.inputEditor.getModel();
@@ -1282,6 +1291,12 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 
 		// Clear attached context, fire event to clear input state, and clear the input editor
 		this.attachmentModel.clear();
+
+		// Clear the input model state to prevent agent mention from being restored
+		if (this._inputModel) {
+			this._inputModel.setState({ inputText: '', attachments: [], selections: [] });
+		}
+
 		this._onDidLoadInputState.fire();
 		if (this.accessibilityService.isScreenReaderOptimized() && isMacintosh) {
 			this._acceptInputForVoiceover();

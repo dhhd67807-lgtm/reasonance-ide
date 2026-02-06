@@ -25,7 +25,7 @@ import { SwitchCompositeViewAction } from '../compositeBarActions.js';
 const maximizeIcon = registerIcon('panel-maximize', Codicon.screenFull, localize('maximizeIcon', 'Icon to maximize a panel.'));
 const restoreIcon = registerIcon('panel-restore', Codicon.screenNormal, localize('restoreIcon', 'Icon to restore a panel.'));
 const closeIcon = registerIcon('panel-close', Codicon.close, localize('closeIcon', 'Icon to close a panel.'));
-const panelIcon = registerIcon('panel-layout-icon', Codicon.layoutPanel, localize('togglePanelOffIcon', 'Icon to toggle the panel off when it is on.'));
+const panelIcon = registerIcon('panel-layout-icon', Codicon.starFull, localize('togglePanelOffIcon', 'Icon to toggle the panel off when it is on.'));
 const panelOffIcon = registerIcon('panel-layout-icon-off', Codicon.layoutPanelOff, localize('togglePanelOnIcon', 'Icon to toggle the panel on when it is off.'));
 
 export class TogglePanelAction extends Action2 {

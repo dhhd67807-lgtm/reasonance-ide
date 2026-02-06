@@ -319,15 +319,24 @@ export class ChatEntitlementService extends Disposable implements IChatEntitleme
 			return;
 		}
 
-		if (!productService.defaultChatAgent) {
-			return; // we need a default chat agent configured going forward from here
-		}
-
+		// REASONANCE/IFLOW: Bypass GitHub authentication and set up as Pro user
+		// This allows chat to work without GitHub sign-in
 		const context = this.context = new Lazy(() => this._register(instantiationService.createInstance(ChatEntitlementContext)));
-		this.requests = new Lazy(() => this._register(instantiationService.createInstance(ChatEntitlementRequests, context.value, {
-			clearQuotas: () => this.clearQuotas(),
-			acceptQuotas: quotas => this.acceptQuotas(quotas)
-		})));
+
+		// Set up as Pro user with iFlow
+		context.value.update({
+			entitlement: ChatEntitlement.Pro,
+			organisations: ['iflow'],
+			sku: 'iflow_pro',
+			copilotTrackingId: 'iflow-reasonance'
+		});
+
+		// Mark as installed and enabled
+		context.value.update({
+			installed: true,
+			disabled: false,
+			untrusted: false
+		});
 
 		this.registerListeners();
 	}

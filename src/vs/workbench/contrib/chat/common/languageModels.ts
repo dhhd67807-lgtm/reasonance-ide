@@ -33,6 +33,8 @@ import { ExtensionsRegistry } from '../../../services/extensions/common/extensio
 import { ChatContextKeys } from './actions/chatContextKeys.js';
 import { ChatAgentLocation } from './constants.js';
 import { ILanguageModelsProviderGroup, ILanguageModelsConfigurationService } from './languageModelsConfiguration.js';
+import { IFlowLanguageModelProvider } from './iflowLanguageModelProvider.js';
+import { IRequestService } from '../../../../platform/request/common/request.js';
 
 export const enum ChatMessageRole {
 	System,
@@ -447,6 +449,7 @@ export class LanguageModelsService implements ILanguageModelsService {
 		@ILanguageModelsConfigurationService private readonly _languageModelsConfigurationService: ILanguageModelsConfigurationService,
 		@IQuickInputService private readonly _quickInputService: IQuickInputService,
 		@ISecretStorageService private readonly _secretStorageService: ISecretStorageService,
+		@IRequestService private readonly _requestService: IRequestService,
 	) {
 		this._hasUserSelectableModels = ChatContextKeys.languageModelsAreUserSelectable.bindTo(_contextKeyService);
 		this._modelPickerUserPreferences = this._readModelPickerPreferences();
@@ -454,6 +457,9 @@ export class LanguageModelsService implements ILanguageModelsService {
 
 		this._store.add(this.onDidChangeLanguageModels(() => this._hasUserSelectableModels.set(this._modelCache.size > 0 && Array.from(this._modelCache.values()).some(model => model.isUserSelectable))));
 		this._store.add(this._languageModelsConfigurationService.onDidChangeLanguageModelGroups(changedGroups => this._onDidChangeLanguageModelGroups(changedGroups)));
+
+		// Register iFlow provider as default
+		this._registerIFlowProvider();
 
 		this._store.add(languageModelChatProviderExtensionPoint.setHandler((extensions, { added, removed }) => {
 			const addedVendors: IUserFriendlyLanguageModel[] = [];
@@ -510,7 +516,7 @@ export class LanguageModelsService implements ILanguageModelsService {
 				configuration: item.configuration,
 				managementCommand: item.managementCommand,
 				when: item.when,
-				isDefault: item.vendor === 'copilot'
+				isDefault: item.vendor === 'iFlow' // Changed from 'copilot' to 'iFlow'
 			};
 			this._vendors.set(item.vendor, vendor);
 			addedVendorIds.push(item.vendor);
@@ -546,6 +552,42 @@ export class LanguageModelsService implements ILanguageModelsService {
 	private async _onDidChangeLanguageModelGroups(changedGroups: readonly ILanguageModelsProviderGroup[]): Promise<void> {
 		const changedVendors = new Set(changedGroups.map(g => g.vendor));
 		await Promise.all(Array.from(changedVendors).map(vendor => this._resolveAllLanguageModels(vendor, true)));
+	}
+
+	private _registerIFlowProvider(): void {
+		// Register iFlow as the default vendor
+		const iflowVendor: ILanguageModelProviderDescriptor = {
+			vendor: 'iFlow',
+			displayName: 'iFlow AI',
+			configuration: undefined,
+			managementCommand: undefined,
+			when: undefined,
+			isDefault: true
+		};
+		this._vendors.set('iFlow', iflowVendor);
+
+		// Create and register the iFlow provider
+		const iflowProvider = new IFlowLanguageModelProvider(
+			this._requestService,
+			this._logService,
+			this._secretStorageService
+		);
+
+		this._store.add(iflowProvider);
+		this._providers.set('iFlow', iflowProvider);
+
+		this._store.add(iflowProvider.onDidChange(() => {
+			this._clearModelCache('iFlow');
+			this._onLanguageModelChange.fire('iFlow');
+		}));
+
+		this._logService.info('[LM] Registered iFlow AI provider as default');
+		this._onDidChangeLanguageModelVendors.fire(['iFlow']);
+
+		// Immediately resolve iFlow models to populate the cache
+		this._resolveAllLanguageModels('iFlow', true).catch(err => {
+			this._logService.error('[LM] Failed to resolve iFlow models:', err);
+		});
 	}
 
 	private _readModelPickerPreferences(): IStringDictionary<boolean> {

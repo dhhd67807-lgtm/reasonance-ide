@@ -628,6 +628,7 @@ export const codiconsLibrary = {
 	editCode: register('edit-code', 0xec68),
 	repoSelected: register('repo-selected', 0xec69),
 	skip: register('skip', 0xec6a),
+	reasonance: register('reasonance', 0xec6b),
 	mergeInto: register('merge-into', 0xec6b),
 	gitBranchChanges: register('git-branch-changes', 0xec6c),
 	gitBranchStagedChanges: register('git-branch-staged-changes', 0xec6d),
