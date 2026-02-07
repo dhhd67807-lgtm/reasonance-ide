@@ -437,7 +437,7 @@ export class ChatViewPane extends ViewPane implements IViewWelcomeDelegate {
 			if (this.sessionsViewerOrientation === AgentSessionsViewerOrientation.Stacked) {
 				newSessionsContainerVisible =
 					!!this.chatEntitlementService.sentiment.installed &&						// chat is installed (otherwise make room for terms and welcome)
-					(!this._widget || (this._widget.isEmpty() && !!this._widget.viewModel)) &&	// chat widget empty (but not when model is loading)
+					!!this._widget &&														// chat widget exists
 					!this.welcomeController?.isShowingWelcome.get();							// welcome not showing
 			}
 

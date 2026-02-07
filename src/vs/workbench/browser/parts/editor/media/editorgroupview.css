@@ -67,18 +67,22 @@
 	background-position-x: center;
 	background-repeat: no-repeat;
 	max-width: 256px;
+	filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.6));
 }
 
 .monaco-workbench.vs-dark .part.editor > .content .editor-group-container .editor-group-watermark .letterpress {
 	background-image: url('./letterpress-dark.svg');
+	filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.6));
 }
 
 .monaco-workbench.hc-light .part.editor > .content .editor-group-container .editor-group-watermark .letterpress {
 	background-image: url('./letterpress-hcLight.svg');
+	filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.6));
 }
 
 .monaco-workbench.hc-black .part.editor > .content .editor-group-container .editor-group-watermark .letterpress {
 	background-image: url('./letterpress-hcDark.svg');
+	filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.6));
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .editor-group-watermark .shortcuts {

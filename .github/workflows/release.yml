@@ -164,18 +164,147 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create installer
+      - name: Install Inno Setup
         run: |
-          cd ../VSCode-win32-x64 && 7z a -r Reasonance-win32-x64.zip *
-          move Reasonance-win32-x64.zip ../reasonance-ide/
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          choco install innosetup -y
+          
+      - name: Create Inno Setup Script
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { $matches[1] } else { "1.0.0" }
+          
+          $script = @"
+          #define MyAppName "Reasonance"
+          #define MyAppVersion "$version"
+          #define MyAppPublisher "Reasonance"
+          #define MyAppURL "https://github.com/${{ github.repository }}"
+          #define MyAppExeName "Reasonance.exe"
+          
+          [Setup]
+          AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
+          AppName={#MyAppName}
+          AppVersion={#MyAppVersion}
+          AppPublisher={#MyAppPublisher}
+          AppPublisherURL={#MyAppURL}
+          AppSupportURL={#MyAppURL}
+          AppUpdatesURL={#MyAppURL}
+          DefaultDirName={autopf}\{#MyAppName}
+          DefaultGroupName={#MyAppName}
+          AllowNoIcons=yes
+          LicenseFile=..\reasonance-ide\LICENSE.txt
+          OutputDir=..\reasonance-ide
+          OutputBaseFilename=Reasonance-Setup-x64
+          SetupIconFile=..\reasonance-ide\resources\win32\code.ico
+          Compression=lzma2/max
+          SolidCompression=yes
+          WizardStyle=modern
+          ArchitecturesAllowed=x64
+          ArchitecturesInstallIn64BitMode=x64
+          PrivilegesRequired=lowest
+          PrivilegesRequiredOverridesAllowed=dialog
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
+          Name: "addtopath"; Description: "Add to PATH (requires shell restart)"; GroupDescription: "Other tasks:"; Flags: unchecked
+          Name: "addcontextmenufiles"; Description: "Add 'Open with Reasonance' to file context menu"; GroupDescription: "Other tasks:"
+          Name: "addcontextmenufolders"; Description: "Add 'Open with Reasonance' to folder context menu"; GroupDescription: "Other tasks:"
+          
+          [Files]
+          Source: "..\VSCode-win32-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+          Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+          Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+          
+          [Run]
+          Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+          
+          [Registry]
+          Root: HKA; Subkey: "Software\Classes\*\shell\Reasonance"; ValueType: string; ValueName: ""; ValueData: "Open with Reasonance"; Flags: uninsdeletekey; Tasks: addcontextmenufiles
+          Root: HKA; Subkey: "Software\Classes\*\shell\Reasonance"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyAppExeName}"; Tasks: addcontextmenufiles
+          Root: HKA; Subkey: "Software\Classes\*\shell\Reasonance\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: addcontextmenufiles
+          Root: HKA; Subkey: "Software\Classes\Directory\shell\Reasonance"; ValueType: string; ValueName: ""; ValueData: "Open with Reasonance"; Flags: uninsdeletekey; Tasks: addcontextmenufolders
+          Root: HKA; Subkey: "Software\Classes\Directory\shell\Reasonance"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyAppExeName}"; Tasks: addcontextmenufolders
+          Root: HKA; Subkey: "Software\Classes\Directory\shell\Reasonance\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: addcontextmenufolders
+          Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\Reasonance"; ValueType: string; ValueName: ""; ValueData: "Open with Reasonance"; Flags: uninsdeletekey; Tasks: addcontextmenufolders
+          Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\Reasonance"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyAppExeName}"; Tasks: addcontextmenufolders
+          Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\Reasonance\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%V"""; Tasks: addcontextmenufolders
+          
+          [Code]
+          const EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+          
+          procedure EnvAddPath(Path: string);
+          var
+              Paths: string;
+          begin
+              if not RegQueryStringValue(HKLM, EnvironmentKey, 'Path', Paths) then
+                  Paths := '';
+              
+              if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then
+                  exit;
+              
+              Paths := Paths + ';' + Path;
+              
+              if RegWriteStringValue(HKLM, EnvironmentKey, 'Path', Paths) then
+                  Log(Format('The [%s] added to PATH: [%s]', [Path, Paths]))
+              else
+                  Log(Format('Error while adding the [%s] to PATH: [%s]', [Path, Paths]));
+          end;
+          
+          procedure EnvRemovePath(Path: string);
+          var
+              Paths: string;
+              P: Integer;
+          begin
+              if not RegQueryStringValue(HKLM, EnvironmentKey, 'Path', Paths) then
+                  exit;
+              
+              P := Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';');
+              if P = 0 then
+                  exit;
+              
+              if P > 1 then
+                  P := P - 1;
+              Delete(Paths, P, Length(Path) + 1);
+              
+              if RegWriteStringValue(HKLM, EnvironmentKey, 'Path', Paths) then
+                  Log(Format('The [%s] removed from PATH: [%s]', [Path, Paths]))
+              else
+                  Log(Format('Error while removing the [%s] from PATH: [%s]', [Path, Paths]));
+          end;
+          
+          procedure CurStepChanged(CurStep: TSetupStep);
+          begin
+              if CurStep = ssPostInstall then
+                  if IsTaskSelected('addtopath') then
+                      EnvAddPath(ExpandConstant('{app}\bin'));
+          end;
+          
+          procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+          begin
+              if CurUninstallStep = usPostUninstall then
+                  EnvRemovePath(ExpandConstant('{app}\bin'));
+          end;
+          "@
+          
+          Set-Content -Path "..\VSCode-win32-x64\setup.iss" -Value $script
 
-      - name: Upload Windows artifact
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "..\VSCode-win32-x64\setup.iss"
+
+      - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: reasonance-windows-x64
-          path: Reasonance-win32-x64.zip
+          name: reasonance-windows-x64-installer
+          path: Reasonance-Setup-x64.exe
           if-no-files-found: error
 
   create-release:
@@ -200,10 +329,10 @@ jobs:
           name: reasonance-macos-x64
           path: ./artifacts/macos-x64
 
-      - name: Download Windows artifact
+      - name: Download Windows Installer
         uses: actions/download-artifact@v4
         with:
-          name: reasonance-windows-x64
+          name: reasonance-windows-x64-installer
           path: ./artifacts/windows
 
       - name: Get version
@@ -234,7 +363,8 @@ jobs:
 
             ### ✨ Features in this Release
 
-            - **iFlow AI Integration**: Powerful AI assistant with streaming responses
+            - **iFlow AI Integration**: Powerful AI assistant with streaming responses and tool calling
+            - **Agentic Tools**: 21 built-in tools including file operations, search, and terminal commands
             - **Enhanced Chat Interface**: Real-time elapsed time, copy button, glowing animated border
             - **Custom Branding**: Reasonance logo and theming
             - **Auto-Update System**: Automatic update checks via GitHub releases
@@ -244,17 +374,28 @@ jobs:
             **macOS (Apple Silicon M1/M2/M3):**
             1. Download `Reasonance-darwin-arm64.zip`
             2. Extract and move to Applications folder
-            3. Right-click and select "Open" on first launch
+            3. Run the fix script: `./fix-macos-app.sh` (see MACOS_FIX.md for details)
+            4. Launch Reasonance from Applications
 
             **macOS (Intel x64):**
             1. Download `Reasonance-darwin-x64.zip`
             2. Extract and move to Applications folder
-            3. Right-click and select "Open" on first launch
+            3. Run the fix script: `./fix-macos-app.sh` (see MACOS_FIX.md for details)
+            4. Launch Reasonance from Applications
 
             **Windows (x64):**
-            1. Download `Reasonance-win32-x64.zip`
-            2. Extract to desired location
-            3. Run `Reasonance.exe`
+            1. Download `Reasonance-Setup-x64.exe`
+            2. Run the installer
+            3. Follow the installation wizard
+            4. Launch Reasonance from Start Menu or Desktop
+
+            **Windows Installer Features:**
+            - ✅ Automatic installation to Program Files
+            - ✅ Desktop shortcut (optional)
+            - ✅ Start Menu shortcuts
+            - ✅ Add to PATH (optional)
+            - ✅ Context menu integration (optional)
+            - ✅ Clean uninstallation
 
             ### 🔄 Auto-Updates
 
@@ -266,6 +407,6 @@ jobs:
           files: |
             ./artifacts/macos-arm64/*.zip
             ./artifacts/macos-x64/*.zip
-            ./artifacts/windows/*.zip
+            ./artifacts/windows/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

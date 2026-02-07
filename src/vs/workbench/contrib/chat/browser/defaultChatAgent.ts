@@ -12,15 +12,22 @@ import { IChatAgentService, IChatAgentData, IChatAgentImplementation, IChatAgent
 import { IChatProgress } from '../common/chatService/chatService.js';
 import { ILanguageModelsService } from '../common/languageModels.js';
 import { ChatAgentLocation, ChatModeKind } from '../common/constants.js';
+import { ILanguageModelToolsService } from '../common/tools/languageModelToolsService.js';
+import { IWorkbenchContribution } from '../../../common/contributions.js';
 
-export class DefaultChatAgent extends Disposable {
+export class DefaultChatAgent extends Disposable implements IWorkbenchContribution {
+
+	static readonly ID = 'workbench.contrib.defaultChatAgent';
 
 	constructor(
 		@IChatAgentService private readonly chatAgentService: IChatAgentService,
 		@ILanguageModelsService private readonly languageModelsService: ILanguageModelsService,
+		@ILanguageModelToolsService private readonly _toolsService: ILanguageModelToolsService,
 	) {
 		super();
+		console.log('🚀 [DefaultChatAgent] CONSTRUCTOR CALLED - Agent is being initialized!');
 		this.registerDefaultAgent();
+		console.log('✅ [DefaultChatAgent] Agent registered successfully');
 	}
 
 	private registerDefaultAgent(): void {
@@ -50,9 +57,11 @@ export class DefaultChatAgent extends Disposable {
 				try {
 					// Get the user's message
 					const message = request.message;
+					console.log('[DefaultChatAgent] Processing message:', message);
 
 					// Get available language models
 					const modelIds = await this.languageModelsService.selectLanguageModels({ vendor: 'iFlow' });
+					console.log('[DefaultChatAgent] Found model IDs:', modelIds);
 
 					if (modelIds.length === 0) {
 						progress([{ kind: 'markdownContent', content: new MarkdownString('No language models available. Please check your iFlow configuration.') }]);
@@ -60,8 +69,41 @@ export class DefaultChatAgent extends Disposable {
 					}
 
 					const modelId = modelIds[0];
+					console.log('[DefaultChatAgent] Using model ID:', modelId);
+					const model = this.languageModelsService.lookupLanguageModel(modelId);
+					console.log('[DefaultChatAgent] Model metadata:', model ? 'found' : 'NOT FOUND');
+					if (model) {
+						console.log('[DefaultChatAgent] Model details:', {
+							id: model.id,
+							vendor: model.vendor,
+							name: model.name,
+							capabilities: model.capabilities
+						});
+					}
 
-					// Send request to language model
+					// Collect tools - always enable for now since we default to Agent mode
+					const tools: any[] = [];
+					console.log('[DefaultChatAgent] Getting tools from service...');
+					const availableTools = Array.from(this._toolsService.getTools(model));
+					console.log('[DefaultChatAgent] Available tools:', availableTools.length);
+					
+					for (const tool of availableTools) {
+						console.log('[DefaultChatAgent] Adding tool:', tool.id, '-', tool.displayName);
+						tools.push({
+							type: 'function',
+							function: {
+								name: tool.id,
+								description: tool.modelDescription,
+								parameters: tool.inputSchema
+							}
+						});
+					}
+					console.log('[DefaultChatAgent] Total tools to send:', tools.length);
+					if (tools.length > 0) {
+						console.log('[DefaultChatAgent] First tool example:', JSON.stringify(tools[0], null, 2));
+					}
+
+					// Send request to language model with tools
 					const response = await this.languageModelsService.sendChatRequest(
 						modelId,
 						new ExtensionIdentifier('reasonance.chat'),
@@ -69,7 +111,7 @@ export class DefaultChatAgent extends Disposable {
 							role: 1, // User role
 							content: [{ type: 'text', value: message }]
 						}],
-						{},
+						{ tools }, // Always pass tools object, even if empty
 						token
 					);
 

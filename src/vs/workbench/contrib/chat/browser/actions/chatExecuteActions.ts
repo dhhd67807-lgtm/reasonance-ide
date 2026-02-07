@@ -455,17 +455,6 @@ export class OpenModePickerAction extends Action2 {
 				{
 					id: MenuId.ChatInput,
 					order: 1,
-					when: ContextKeyExpr.and(
-						ChatContextKeys.enabled,
-						ChatContextKeys.location.isEqualTo(ChatAgentLocation.Chat),
-						ChatContextKeys.inQuickChat.negate(),
-						ContextKeyExpr.or(
-							ChatContextKeys.lockedToCodingAgent.negate(),
-							ChatContextKeys.chatSessionHasCustomAgentTarget),
-						// Hide in welcome view when session type is not local
-						ContextKeyExpr.or(
-							ChatContextKeys.inAgentSessionsWelcome.negate(),
-							ChatContextKeys.agentSessionType.isEqualTo(AgentSessionProviders.Local))),
 					group: 'navigation',
 				},
 			]

@@ -1302,10 +1302,12 @@ have to be updated for changes to the rules above, or to support more deeply nes
 	.chat-input-picker-item {
 		min-width: 0px;
 		overflow: hidden;
+		cursor: pointer;
 
 		.action-label {
 			min-width: 0px;
 			overflow: hidden;
+			cursor: pointer;
 
 			.chat-input-picker-label {
 				overflow: hidden;

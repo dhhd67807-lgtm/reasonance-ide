@@ -11,6 +11,13 @@ import { ConfirmationTool, ConfirmationToolData } from './confirmationTool.js';
 import { EditTool, EditToolData } from './editFileTool.js';
 import { createManageTodoListToolData, ManageTodoListTool } from './manageTodoListTool.js';
 import { RunSubagentTool } from './runSubagentTool.js';
+import {
+	CodebaseSearchTool, CodebaseSearchToolData,
+	ReadFileTool, ReadFileToolData,
+	ListDirTool, ListDirToolData,
+	GrepSearchTool, GrepSearchToolData,
+	FileSearchTool, FileSearchToolData
+} from './reasonanceTools.js';
 
 export class BuiltinToolsContribution extends Disposable implements IWorkbenchContribution {
 
@@ -32,6 +39,27 @@ export class BuiltinToolsContribution extends Disposable implements IWorkbenchCo
 		// Register the confirmation tool
 		const confirmationTool = instantiationService.createInstance(ConfirmationTool);
 		this._register(toolsService.registerTool(ConfirmationToolData, confirmationTool));
+
+		// Register Reasonance AI tools
+		const codebaseSearchTool = instantiationService.createInstance(CodebaseSearchTool);
+		this._register(toolsService.registerTool(CodebaseSearchToolData, codebaseSearchTool));
+		this._register(toolsService.agentToolSet.addTool(CodebaseSearchToolData));
+
+		const readFileTool = instantiationService.createInstance(ReadFileTool);
+		this._register(toolsService.registerTool(ReadFileToolData, readFileTool));
+		this._register(toolsService.readToolSet.addTool(ReadFileToolData));
+
+		const listDirTool = instantiationService.createInstance(ListDirTool);
+		this._register(toolsService.registerTool(ListDirToolData, listDirTool));
+		this._register(toolsService.readToolSet.addTool(ListDirToolData));
+
+		const grepSearchTool = instantiationService.createInstance(GrepSearchTool);
+		this._register(toolsService.registerTool(GrepSearchToolData, grepSearchTool));
+		this._register(toolsService.readToolSet.addTool(GrepSearchToolData));
+
+		const fileSearchTool = instantiationService.createInstance(FileSearchTool);
+		this._register(toolsService.registerTool(FileSearchToolData, fileSearchTool));
+		this._register(toolsService.readToolSet.addTool(FileSearchToolData));
 
 		const runSubagentTool = this._register(instantiationService.createInstance(RunSubagentTool));
 

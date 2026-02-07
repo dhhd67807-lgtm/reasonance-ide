@@ -163,11 +163,15 @@ export class IFlowLanguageModelProvider extends Disposable implements ILanguageM
 		};
 
 		// Add tools if provided
+		this.logService.info('[iFlow] Checking for tools in options:', Object.keys(options));
+		this.logService.info('[iFlow] options.tools:', options.tools);
 		if (options.tools && Array.isArray(options.tools) && options.tools.length > 0) {
 			requestBody.tools = options.tools;
 			// Enable auto tool calling
 			requestBody.tool_choice = 'auto';
 			this.logService.info('[iFlow] Tools enabled:', options.tools.length, 'tools');
+		} else {
+			this.logService.info('[iFlow] No tools provided in options');
 		}
 
 		this.logService.info('[iFlow] Request body:', JSON.stringify(requestBody, null, 2));

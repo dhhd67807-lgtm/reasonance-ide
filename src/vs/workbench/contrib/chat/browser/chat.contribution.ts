@@ -141,6 +141,7 @@ import { ChatWindowNotifier } from './chatWindowNotifier.js';
 import { ChatRepoInfoContribution } from './chatRepoInfo.js';
 import { VALID_PROMPT_FOLDER_PATTERN } from '../common/promptSyntax/utils/promptFilesLocator.js';
 import { ChatTipService, IChatTipService } from './chatTipService.js';
+import { DefaultChatAgent } from './defaultChatAgent.js';
 
 const toolReferenceNameEnumValues: string[] = [];
 const toolReferenceNameEnumDescriptions: string[] = [];
@@ -1450,10 +1451,7 @@ registerWorkbenchContribution2(UserToolSetsContributions.ID, UserToolSetsContrib
 registerWorkbenchContribution2(PromptLanguageFeaturesProvider.ID, PromptLanguageFeaturesProvider, WorkbenchPhase.Eventually);
 registerWorkbenchContribution2(ChatWindowNotifier.ID, ChatWindowNotifier, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(ChatRepoInfoContribution.ID, ChatRepoInfoContribution, WorkbenchPhase.Eventually);
-
-// Register default chat agent for iFlow
-import { DefaultChatAgent } from './defaultChatAgent.js';
-registerWorkbenchContribution2('workbench.contrib.defaultChatAgent', DefaultChatAgent, WorkbenchPhase.BlockRestore);
+registerWorkbenchContribution2(DefaultChatAgent.ID, DefaultChatAgent, WorkbenchPhase.BlockRestore);
 
 registerChatActions();
 registerChatAccessibilityActions();
