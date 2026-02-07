@@ -210,7 +210,7 @@ export class IFlowLanguageModelProvider extends Disposable implements ILanguageM
 		message: string | IChatMessage,
 		token: CancellationToken
 	): Promise<number> {
-		// Rough estimation: 1 token ≈ 4 characters
+		// Rough estimation: 1 token approximately equals 4 characters // allow-any-unicode-next-line
 		if (typeof message === 'string') {
 			return Math.ceil(message.length / 4);
 		}

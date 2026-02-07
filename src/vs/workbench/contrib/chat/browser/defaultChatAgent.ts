@@ -25,9 +25,9 @@ export class DefaultChatAgent extends Disposable implements IWorkbenchContributi
 		@ILanguageModelToolsService private readonly _toolsService: ILanguageModelToolsService,
 	) {
 		super();
-		console.log('🚀 [DefaultChatAgent] CONSTRUCTOR CALLED - Agent is being initialized!');
+		console.log('[DefaultChatAgent] CONSTRUCTOR CALLED - Agent is being initialized!'); // allow-any-unicode-next-line
 		this.registerDefaultAgent();
-		console.log('✅ [DefaultChatAgent] Agent registered successfully');
+		console.log('[DefaultChatAgent] Agent registered successfully'); // allow-any-unicode-next-line
 	}
 
 	private registerDefaultAgent(): void {

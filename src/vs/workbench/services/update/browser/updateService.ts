@@ -55,9 +55,16 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 		if (this.productService.updateUrl) {
 			this.githubUpdateProvider = new GitHubUpdateProvider(this.productService, this.logService);
 			this.logService.info('[BrowserUpdateService] GitHub update provider initialized');
+			
+			// Check for updates on startup
+			this.checkForUpdates(false);
+			
+			// Check for updates every 6 hours
+			setInterval(() => {
+				this.logService.info('[BrowserUpdateService] Periodic update check');
+				this.checkForUpdates(false);
+			}, 6 * 60 * 60 * 1000); // 6 hours
 		}
-
-		this.checkForUpdates(false);
 	}
 
 	async isLatestVersion(): Promise<boolean | undefined> {
@@ -128,8 +135,18 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 			this.logService.info('[BrowserUpdateService] Opening download page:', downloadUrl);
 			window.open(downloadUrl, '_blank');
 		} else {
-			// Fallback to reload
-			this.hostService.reload();
+			// Fallback to GitHub releases page
+			const updateUrl = this.productService.updateUrl;
+			if (updateUrl) {
+				// Convert API URL to releases page URL
+				// https://api.github.com/repos/owner/repo/releases/latest -> https://github.com/owner/repo/releases
+				const releasesUrl = updateUrl.replace('api.github.com/repos/', 'github.com/').replace('/releases/latest', '/releases');
+				this.logService.info('[BrowserUpdateService] Opening releases page:', releasesUrl);
+				window.open(releasesUrl, '_blank');
+			} else {
+				// Last resort: reload
+				this.hostService.reload();
+			}
 		}
 	}
 
