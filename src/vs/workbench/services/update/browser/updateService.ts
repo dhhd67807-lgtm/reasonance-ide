@@ -15,6 +15,7 @@ import { GitHubUpdateProvider } from './githubUpdateProvider.js';
 
 export interface IUpdate {
 	version: string;
+	downloadUrl?: string;
 }
 
 export interface IUpdateProvider {
@@ -42,6 +43,8 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 	}
 
 	private readonly githubUpdateProvider: GitHubUpdateProvider | undefined;
+
+	private currentUpdate: IUpdate | null = null;
 
 	constructor(
 		@IBrowserWorkbenchEnvironmentService private readonly environmentService: IBrowserWorkbenchEnvironmentService,
@@ -90,9 +93,12 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 
 			const update = await this.githubUpdateProvider.checkForUpdate();
 			if (update) {
-				// State -> Downloaded
+				// Store the update for later use
+				this.currentUpdate = update;
+				
+				// State -> Ready (skip download state for browser)
 				this.state = State.Ready({ version: update.version, productVersion: update.version }, explicit, false);
-				this.logService.info('[BrowserUpdateService] Update available:', update.version);
+				this.logService.info('[BrowserUpdateService] Update available:', update.version, 'Download URL:', update.downloadUrl);
 			} else {
 				// State -> Idle
 				this.state = State.Idle(UpdateType.Archive);
@@ -111,6 +117,7 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 
 			const update = await updateProvider.checkForUpdate();
 			if (update) {
+				this.currentUpdate = update;
 				// State -> Downloaded
 				this.state = State.Ready({ version: update.version, productVersion: update.version }, explicit, false);
 			} else {
@@ -129,23 +136,44 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 	}
 
 	async applyUpdate(): Promise<void> {
-		// Open the download page in a new window
-		const downloadUrl = this.productService.downloadUrl;
+		if (!this.currentUpdate) {
+			this.logService.warn('[BrowserUpdateService] No update available to apply');
+			return;
+		}
+
+		const downloadUrl = this.currentUpdate.downloadUrl;
+		
 		if (downloadUrl) {
-			this.logService.info('[BrowserUpdateService] Opening download page:', downloadUrl);
-			window.open(downloadUrl, '_blank');
+			this.logService.info('[BrowserUpdateService] Starting automatic download:', downloadUrl);
+			
+			// Create a hidden link and trigger download
+			const link = document.createElement('a');
+			link.href = downloadUrl;
+			link.download = ''; // Suggest download
+			link.style.display = 'none';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			
+			this.logService.info('[BrowserUpdateService] Download triggered successfully');
+			
+			// Show notification that download started
+			// The browser will handle the actual download
+			return;
+		}
+		
+		// Fallback: Open download page
+		const fallbackUrl = this.productService.downloadUrl;
+		if (fallbackUrl) {
+			this.logService.info('[BrowserUpdateService] Opening download page:', fallbackUrl);
+			window.open(fallbackUrl, '_blank');
 		} else {
-			// Fallback to GitHub releases page
+			// Convert API URL to releases page URL
 			const updateUrl = this.productService.updateUrl;
 			if (updateUrl) {
-				// Convert API URL to releases page URL
-				// https://api.github.com/repos/owner/repo/releases/latest -> https://github.com/owner/repo/releases
 				const releasesUrl = updateUrl.replace('api.github.com/repos/', 'github.com/').replace('/releases/latest', '/releases');
 				this.logService.info('[BrowserUpdateService] Opening releases page:', releasesUrl);
 				window.open(releasesUrl, '_blank');
-			} else {
-				// Last resort: reload
-				this.hostService.reload();
 			}
 		}
 	}

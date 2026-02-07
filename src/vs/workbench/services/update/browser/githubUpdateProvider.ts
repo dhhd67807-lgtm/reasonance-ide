@@ -58,8 +58,13 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 			// Compare versions
 			if (this.isNewerVersion(latestVersion, currentVersion)) {
 				this.logService.info('[GitHubUpdateProvider] Update available:', latestVersion);
+				
+				// Find the appropriate download URL based on platform
+				const downloadUrl = this.getDownloadUrl(release);
+				
 				return {
-					version: latestVersion
+					version: latestVersion,
+					downloadUrl
 				};
 			}
 
@@ -70,6 +75,39 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 			this.logService.error('[GitHubUpdateProvider] Error checking for updates:', error);
 			return null;
 		}
+	}
+
+	private getDownloadUrl(release: IGitHubRelease): string | undefined {
+		// Detect platform
+		const userAgent = navigator.userAgent.toLowerCase();
+		const isMac = userAgent.includes('mac');
+		const isWindows = userAgent.includes('win');
+		const isArm = userAgent.includes('arm') || userAgent.includes('aarch64');
+
+		this.logService.info('[GitHubUpdateProvider] Platform detection - Mac:', isMac, 'Windows:', isWindows, 'ARM:', isArm);
+
+		// Find matching asset
+		for (const asset of release.assets) {
+			const name = asset.name.toLowerCase();
+			
+			if (isMac && isArm && name.includes('darwin') && name.includes('arm64')) {
+				this.logService.info('[GitHubUpdateProvider] Found macOS ARM64 asset:', asset.name);
+				return asset.browser_download_url;
+			}
+			
+			if (isMac && !isArm && name.includes('darwin') && name.includes('x64')) {
+				this.logService.info('[GitHubUpdateProvider] Found macOS x64 asset:', asset.name);
+				return asset.browser_download_url;
+			}
+			
+			if (isWindows && name.includes('setup') && name.includes('x64') && name.endsWith('.exe')) {
+				this.logService.info('[GitHubUpdateProvider] Found Windows installer:', asset.name);
+				return asset.browser_download_url;
+			}
+		}
+
+		this.logService.warn('[GitHubUpdateProvider] No matching asset found, using release page');
+		return release.html_url;
 	}
 
 	private isNewerVersion(latest: string, current: string): boolean {
