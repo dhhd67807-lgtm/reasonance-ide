@@ -54,13 +54,13 @@ jobs:
 
       - name: Compile and package
         run: |
-          npm run gulp vscode-darwin-arm64-min
+          npm run gulp vscode-darwin-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create archive
         run: |
-          npm run gulp vscode-darwin-arm64-archive
+          cd ../VSCode-darwin-arm64 && zip -r -y ../vscode/Reasonance-darwin-arm64.zip "Reasonance.app" && cd ../vscode
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reasonance-macos-arm64
-          path: .build/darwin/archive/*.zip
+          path: Reasonance-darwin-arm64.zip
           if-no-files-found: error
 
   build-macos-x64:
@@ -113,13 +113,13 @@ jobs:
 
       - name: Compile and package
         run: |
-          npm run gulp vscode-darwin-x64-min
+          npm run gulp vscode-darwin-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create DMG
         run: |
-          npm run gulp vscode-darwin-x64-archive
+          cd ../VSCode-darwin-x64 && zip -r -y ../vscode/Reasonance-darwin-x64.zip "Reasonance.app" && cd ../vscode
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reasonance-macos-x64
-          path: .build/darwin/archive/*.zip
+          path: Reasonance-darwin-x64.zip
           if-no-files-found: error
 
   build-windows:
@@ -158,12 +158,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile and package
-        run: npm run gulp vscode-win32-x64-min
+        run: npm run gulp vscode-win32-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create installer
-        run: npm run gulp vscode-win32-x64-archive
+        run: |
+          cd ../VSCode-win32-x64 && 7z a -r ../vscode/Reasonance-win32-x64.zip * && cd ../vscode
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -171,7 +172,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reasonance-windows-x64
-          path: .build/win32-x64/archive/*.zip
+          path: Reasonance-win32-x64.zip
           if-no-files-found: error
 
   create-release:
