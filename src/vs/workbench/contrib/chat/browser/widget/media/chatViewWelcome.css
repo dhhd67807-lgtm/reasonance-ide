@@ -330,7 +330,7 @@ div.chat-welcome-view {
 	min-height: 120px !important;
 	width: 120px !important;
 	margin: 20px auto !important;
-	background-image: url('../../../editor/media/letterpress-dark.svg') !important;
+	background-image: url('../../../../../browser/parts/editor/media/letterpress-dark.svg') !important;
 	background-size: contain !important;
 	background-repeat: no-repeat !important;
 	background-position: center !important;
@@ -346,7 +346,7 @@ div.chat-welcome-view {
 	min-height: 120px !important;
 	width: 120px !important;
 	margin: 20px auto !important;
-	background-image: url('../../../editor/media/letterpress-dark.svg') !important;
+	background-image: url('../../../../../browser/parts/editor/media/letterpress-dark.svg') !important;
 	background-size: contain !important;
 	background-repeat: no-repeat !important;
 	background-position: center !important;
