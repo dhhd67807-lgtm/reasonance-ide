@@ -209,6 +209,8 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 
 	private async onUpdateStateChange(state: UpdateState): Promise<void> {
 		this.updateStateContextKey.set(state.type);
+		
+		console.log('[UpdateContribution] State changed to:', state.type);
 
 		switch (state.type) {
 			case StateType.Disabled:
@@ -239,10 +241,12 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 				break;
 
 			case StateType.AvailableForDownload:
+				console.log('[UpdateContribution] Update available for download');
 				this.onUpdateAvailable(state.update);
 				break;
 
 			case StateType.Downloaded:
+				console.log('[UpdateContribution] Update downloaded');
 				this.onUpdateDownloaded(state.update);
 				break;
 
@@ -251,6 +255,7 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 				break;
 
 			case StateType.Ready: {
+				console.log('[UpdateContribution] Update ready, version:', state.update.productVersion);
 				const productVersion = state.update.productVersion;
 				if (productVersion) {
 					const currentVersion = parseVersion(this.productService.version);
@@ -386,11 +391,20 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 					})
 				]
 			});
-		} else if ((isWindows && this.productService.target !== 'user') || this.shouldShowNotification()) {
+		} else if (isWeb || (isWindows && this.productService.target !== 'user') || this.shouldShowNotification()) {
+			// Always show notification in web/browser environments
 
 			const actions = [{
-				label: nls.localize('updateNow', "Update Now"),
-				run: () => this.updateService.quitAndInstall()
+				label: isWeb ? nls.localize('downloadUpdate', "Download Update") : nls.localize('updateNow', "Update Now"),
+				run: () => {
+					if (isWeb) {
+						// In web, trigger download
+						this.updateService.applyUpdate();
+					} else {
+						// In native, restart to update
+						this.updateService.quitAndInstall();
+					}
+				}
 			}, {
 				label: nls.localize('later', "Later"),
 				run: () => { }
@@ -406,14 +420,18 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 				});
 			}
 
-			// windows user fast updates and mac
+			// Show notification
+			const message = isWeb 
+				? nls.localize('updateAvailableWeb', "A new version of {0} ({1}) is available. Click 'Download Update' to get it.", this.productService.nameLong, productVersion)
+				: nls.localize('updateAvailableAfterRestart', "Restart {0} to apply the latest update.", this.productService.nameLong);
+
 			this.notificationService.prompt(
 				severity.Info,
-				nls.localize('updateAvailableAfterRestart', "Restart {0} to apply the latest update.", this.productService.nameLong),
+				message,
 				actions,
 				{
 					sticky: true,
-					priority: NotificationPriority.OPTIONAL
+					priority: NotificationPriority.URGENT
 				}
 			);
 		}
