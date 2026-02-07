@@ -60,7 +60,8 @@ jobs:
 
       - name: Create archive
         run: |
-          cd ../VSCode-darwin-arm64 && zip -r -y ../vscode/Reasonance-darwin-arm64.zip "Reasonance.app" && cd ../vscode
+          cd ../VSCode-darwin-arm64 && zip -r -y Reasonance-darwin-arm64.zip "Reasonance.app"
+          mv Reasonance-darwin-arm64.zip ../reasonance-ide/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -119,7 +120,8 @@ jobs:
 
       - name: Create DMG
         run: |
-          cd ../VSCode-darwin-x64 && zip -r -y ../vscode/Reasonance-darwin-x64.zip "Reasonance.app" && cd ../vscode
+          cd ../VSCode-darwin-x64 && zip -r -y Reasonance-darwin-x64.zip "Reasonance.app"
+          mv Reasonance-darwin-x64.zip ../reasonance-ide/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -164,7 +166,8 @@ jobs:
 
       - name: Create installer
         run: |
-          cd ../VSCode-win32-x64 && 7z a -r ../vscode/Reasonance-win32-x64.zip * && cd ../vscode
+          cd ../VSCode-win32-x64 && 7z a -r Reasonance-win32-x64.zip *
+          move Reasonance-win32-x64.zip ../reasonance-ide/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
